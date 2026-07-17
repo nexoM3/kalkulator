@@ -1,0 +1,640 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Kalkulator ciesielski</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Segoe UI',Arial,sans-serif;background:#1a1a1a;color:#fff;padding:0}
+    .container{display:flex;min-height:100vh}
+    .panel{padding:20px;display:flex;flex-direction:column}
+    .left{width:280px;background:#0d0d0d;border-right:1px solid #333}
+    .right{flex:1;background:#1a1a1a;padding:20px}
+    h1{font-size:16px;font-weight:700;margin-bottom:20px;text-transform:uppercase;letter-spacing:1px;color:#fff}
+    label{display:block;font-size:11px;font-weight:600;text-transform:uppercase;margin-top:16px;margin-bottom:6px;color:#aaa}
+    input[type=number],select{width:100%;padding:10px;border:1px solid #333;background:#222;color:#fff;border-radius:4px;font-size:14px}
+    input[type=number]:focus,select:focus{outline:none;border-color:#0f6;background:#1a1a1a}
+    .input-group{display:flex;gap:8px;align-items:flex-end}
+    .input-group input{flex:1}
+    .unit-select{width:60px;flex-shrink:0}
+    button{width:100%;padding:12px;margin-top:20px;background:#00dd00;color:#000;border:0;border-radius:4px;font-weight:700;font-size:14px;cursor:pointer;text-transform:uppercase}
+    button:hover{background:#00ff00}
+    .results-section{margin-top:24px}
+    .result-item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #333;font-size:13px}
+    .result-label{color:#aaa;flex:1}
+    .result-value{font-weight:700;color:#00dd00;font-size:16px;min-width:80px;text-align:right}
+    .result-unit{font-size:11px;color:#666;margin-left:6px}
+    .results-section{margin-top:24px;opacity:0;transform:translateY(10px);transition:opacity .3s ease,transform .3s ease}
+    .results-section.visible{opacity:1;transform:translateY(0)}
+    .summary-grid{display:grid;grid-template-columns:1fr;gap:18px;margin-bottom:18px}
+    .summary-card{background:#0f0f0f;padding:12px;border:1px solid #232323;border-radius:6px}
+    .summary-title{font-size:12px;color:#aaa;font-weight:700;margin-bottom:8px}
+    .summary-item{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed #222;font-size:13px}
+    .summary-value{color:#00dd00;font-weight:800}
+    .corner-value{color:#00ff66;font-weight:900;font-size:18px}
+    .corner-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+    .corner-grid-two{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+    .corner-box{background:#0b0b0b;padding:12px;border-radius:6px;border:1px solid #222;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:90px}
+    .main-value{color:#00ff66;font-weight:900;font-size:18px}
+    .main-label{color:#888;font-size:11px;margin-top:8px;text-transform:uppercase;letter-spacing:0.5px}
+    .corner-dual{display:flex;gap:12px;justify-content:space-around;width:100%}
+    .corner-value-small{color:#00ff66;font-weight:900;font-size:14px}
+    .corner-label-small{color:#888;font-size:10px;margin-top:4px;text-transform:uppercase;letter-spacing:0.5px}
+    .main-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px}
+    .main-grid-two{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:8px}
+    .main-box{background:#0b0b0b;padding:12px;border-radius:6px;border:1px solid #222;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:90px}
+    .main-value{color:#00ff66;font-weight:900;font-size:18px}
+    .main-label{color:#888;font-size:11px;margin-top:8px;text-transform:uppercase;letter-spacing:0.5px}
+    .beam-item{background:#1a1a1a;border:1px solid #333;padding:10px;border-radius:4px;margin-bottom:8px}
+    .beam-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:11px;color:#aaa;font-weight:600}
+    .beam-remove{background:#cc0000;padding:4px 8px;font-size:10px;cursor:pointer;border:0;color:#fff;border-radius:3px}
+    .beam-remove:hover{background:#ff0000}
+    .beam-inputs{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+    .beam-input-group{display:flex;flex-direction:column}
+    .beam-input-group label{font-size:10px;color:#888;margin-bottom:4px}
+    .beam-input-group input{padding:6px;border:1px solid #333;background:#222;color:#fff;border-radius:3px;font-size:12px}
+    .preset-row{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}
+    .preset-btn{padding:8px 6px;background:#2a2a2a;color:#ddd;border:1px solid #3a3a3a;border-radius:4px;font-size:12px;font-weight:700;cursor:pointer}
+    .preset-btn:hover{background:#343434}
+    .toggle-row{display:flex;align-items:center;gap:8px;margin-top:8px}
+    .toggle-row input{width:auto}
+    .small-btn{padding:10px;margin-top:8px;background:#1f8cff;color:#fff;border:0;border-radius:4px;font-weight:700;font-size:12px;cursor:pointer;text-transform:uppercase}
+    .small-btn:hover{background:#39a1ff}
+    .status-note{font-size:11px;color:#8a8a8a;margin-top:6px;min-height:14px}
+    .section-box{border:1px solid #2f2f2f;background:#131313;padding:12px;margin-top:14px;border-radius:0}
+    .section-box:first-of-type{margin-top:0}
+    .section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:#9a9a9a;margin-bottom:8px;border-bottom:1px solid #252525;padding-bottom:6px}
+    .section-box label{margin-top:12px}
+    .section-box button{margin-top:12px}
+    .section-box .result-item{margin-top:10px}
+    .details-toggle{display:flex;align-items:center;justify-content:space-between;width:100%;margin-top:8px;padding:10px 12px;background:#202020;color:#d8d8d8;border:1px solid #343434;border-radius:4px;cursor:pointer;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+    .details-toggle:hover{background:#2a2a2a}
+    .details-toggle .arrow{color:#00dd00;font-size:14px;min-width:16px;text-align:right}
+    .concrete-details{margin-top:8px;border:1px solid #2f2f2f;background:#111;padding:10px;border-radius:4px}
+    .concrete-details.hidden{display:none}
+    .concrete-summary-row{display:flex;justify-content:space-between;font-size:12px;color:#aaa;padding:6px 0;border-bottom:1px dashed #252525}
+    .concrete-summary-row:last-of-type{border-bottom:1px solid #2a2a2a;padding-bottom:8px;margin-bottom:8px}
+    .concrete-summary-value{font-weight:700;color:#00dd00}
+    .concrete-list{margin:0;padding-left:18px}
+    .concrete-list li{font-size:12px;color:#cfcfcf;padding:4px 0;line-height:1.35}
+    .beam-number{color:#00ff66;font-weight:900}
+    .concrete-list .beam-volume{color:#00ff66;font-weight:700}
+    .concrete-list .beam-warning{color:#ff8a8a;font-weight:700}
+    .concrete-empty{font-size:12px;color:#7a7a7a;padding:4px 0}
+    .results-details{margin-top:8px;border:1px solid #2f2f2f;background:#111;padding:10px;border-radius:4px;max-height:2000px;overflow:hidden;transition:max-height .3s ease,opacity .3s ease}
+    .results-details.hidden{max-height:0;overflow:hidden;padding:0;opacity:0}
+    .results-details #summary{margin:0}
+    .graphic-card{background:#101010;border:1px solid #232323;border-radius:10px;padding:16px;margin-bottom:18px;box-shadow:0 18px 40px rgba(0,0,0,.18)}
+    .graphic-title{font-size:12px;color:#aaa;font-weight:700;margin-bottom:12px;text-transform:uppercase;letter-spacing:.8px}
+    .graphic-frame{background:linear-gradient(180deg,#171717 0%,#0d0d0d 100%);border:1px solid #222;border-radius:8px;padding:10px}
+    .graphic-frame svg{width:100%;height:auto;display:block}
+    .graphic-line{stroke:#d8d8d8;stroke-width:4;stroke-linecap:round;stroke-linejoin:round;fill:none}
+    .graphic-line-secondary{stroke:#6d6d6d;stroke-width:2.5;stroke-dasharray:6 6;fill:none}
+    .graphic-angle{stroke:#ff4747;stroke-width:4;fill:none;stroke-linecap:round}
+    .graphic-label{fill:#f3f3f3;font-size:14px;font-weight:700}
+    .graphic-sub{fill:#8a8a8a;font-size:12px;font-weight:600}
+    .graphic-red{fill:#ff5a5a;font-size:16px;font-weight:800}
+    .graphic-chip{fill:#121212;stroke:#303030;stroke-width:1.5}
+
+    @media (max-width: 900px){
+      .container{flex-direction:column;min-height:auto}
+      .panel{padding:14px}
+      .left{width:100%;border-right:0;border-bottom:1px solid #333}
+      .right{padding:14px}
+      h1{font-size:15px;margin-bottom:14px}
+      label{font-size:12px}
+      input[type=number],select{font-size:16px;padding:12px}
+      .unit-select{width:72px}
+      button{min-height:46px;font-size:14px}
+      .preset-row{grid-template-columns:repeat(2,1fr);gap:8px}
+      .preset-btn{padding:10px 8px}
+      .section-box{padding:10px}
+      .summary-grid{gap:12px}
+      .main-grid{grid-template-columns:repeat(2,1fr)}
+      .main-grid-two{grid-template-columns:repeat(2,1fr)}
+      .corner-grid,.corner-grid-two{grid-template-columns:1fr}
+      .beam-inputs{grid-template-columns:1fr}
+      .result-item{font-size:14px}
+      .result-value{font-size:18px}
+      .graphic-card{padding:12px;border-radius:8px}
+    }
+
+    @media (max-width: 480px){
+      .panel{padding:12px}
+      .right{padding:12px}
+      h1{font-size:14px;letter-spacing:.6px}
+      .input-group{gap:6px}
+      .result-item{padding:12px 0}
+      .main-value,.corner-value{font-size:16px}
+      .corner-value-small{font-size:13px}
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="panel left">
+      <h1>📐 Kalkulator Cieślski</h1>
+
+      <div class="section-box" id="section-rafter">
+        <button id="toggleResultsBtn" class="details-toggle" type="button" aria-expanded="true">
+          <span>Wyniki obliczeń</span>
+          <span id="resultsArrow" class="arrow">▲</span>
+        </button>
+        <div id="results" class="results-details">
+          <div id="summary"></div>
+        </div>
+
+        <div class="section-title">Krokiew</div>
+        <label>Kąt dachu</label>
+        <div class="input-group">
+          <input id="pitchDeg" type="number" step="0.1" value="">
+          <span style="color:#aaa;font-size:12px">°</span>
+        </div>
+
+        <label id="dimensionLabel">Podstawa dachu</label>
+        <div class="input-group">
+            <input id="baseB" type="number" step="0.01" value="">
+          <select id="unit" class="unit-select">
+            <option value="m">m</option>
+            <option value="cm" selected>cm</option>
+            <option value="mm">mm</option>
+          </select>
+        </div>
+
+        <label>Typ kątownika</label>
+        <div class="input-group">
+          <select id="angleToolMode">
+            <option value="adjustable" selected>Nastawny</option>
+            <option value="square90">Aluminiowy 90°</option>
+          </select>
+        </div>
+
+        <label>Tryb obliczeń</label>
+        <div class="input-group">
+          <select id="dimensionMode">
+            <option value="base" selected>Podstawa dachu</option>
+            <option value="height">Wysokość dachu</option>
+          </select>
+        </div>
+
+        <label>Wysunięcie kalenicy</label>
+        <div class="input-group">
+          <input id="ridgeOffset" type="number" step="0.01" value="">
+          <span style="color:#aaa;font-size:12px" id="ridgeOffsetUnit">cm</span>
+        </div>
+
+        <button id="calcBtn" style="margin-top:8px;background:#00dd00">Oblicz</button>
+      </div>
+
+      <div class="section-box" id="section-concrete">
+        <div class="section-title">Beton</div>
+        <label style="margin-top:0">Belki betonowe</label>
+        <div id="beamsContainer"></div>
+        <div id="concreteVolumeBox" class="result-item" style="margin-top:8px;padding:12px 0;border-top:1px solid #333;border-bottom:1px solid #333;">
+          <div class="result-label">Cały beton</div>
+          <div><span id="concreteVolumeDisplay" class="result-value">0</span><span class="result-unit">m³</span></div>
+        </div>
+        <button id="saveConcreteBtn" style="margin-top:8px;background:#ff6600">Oblicz</button>
+        <button id="clearBeamsBtn" style="margin-top:8px;background:#666">Wyczyść</button>
+        <button id="toggleConcreteDetailsBtn" class="details-toggle" type="button" aria-expanded="false">
+          <span>Szczegóły obliczeń betonu</span>
+          <span id="concreteDetailsArrow" class="arrow">▼</span>
+        </button>
+        <div id="concreteDetails" class="concrete-details hidden">
+          <div class="concrete-summary-row">
+            <span>Liczba belek</span>
+            <span id="concreteBeamsEntered" class="concrete-summary-value">0</span>
+          </div>
+          <ul id="concreteDetailsList" class="concrete-list"></ul>
+          <div id="concreteDetailsEmpty" class="concrete-empty">Brak wprowadzonych belek.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel right">
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'ciesiel_custom_formulas_v1';
+    let accumulatedConcrete = 0; // suma betonu - kumuluje wartości
+    let approvedBeams = []; // zatwierdzone belki trafiają na listę podpunktów
+    let lastResultsText = '';
+    let concreteDetailsExpanded = false;
+    let resultsExpanded = true;
+    let previousLengthUnit = 'cm';
+
+    function toUnit(valueMeters, unit){
+      if(unit==='m') return valueMeters.toFixed(3);
+      if(unit==='cm') return (valueMeters*100).toFixed(1);
+      if(unit==='mm') return Math.round(valueMeters*1000);
+    }
+
+    function seedDefaultFormulas(){
+      // seed wzorów nie jest już potrzebny w nowym interfejsie
+    }
+
+    function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    function parseLength(value, unit){
+      const v = parseFloat(value) || 0;
+      if(unit==='cm') return v / 100;
+      if(unit==='mm') return v / 1000;
+      return v;
+    }
+
+    function convertLengthValue(value, fromUnit, toUnitName){
+      const numericValue = parseFloat(value);
+      if(Number.isNaN(numericValue)) return '';
+
+      const valueMeters = parseLength(numericValue, fromUnit);
+      if(toUnitName === 'm') return valueMeters.toFixed(3);
+      if(toUnitName === 'cm') return (valueMeters * 100).toFixed(1);
+      if(toUnitName === 'mm') return String(Math.round(valueMeters * 1000));
+      return String(numericValue);
+    }
+
+    function convertLengthInputsToUnit(fromUnit, toUnitName){
+      const baseInput = document.getElementById('baseB');
+      const ridgeOffsetInput = document.getElementById('ridgeOffset');
+      if(baseInput && baseInput.value !== ''){
+        baseInput.value = convertLengthValue(baseInput.value, fromUnit, toUnitName);
+      }
+      if(ridgeOffsetInput && ridgeOffsetInput.value !== ''){
+        ridgeOffsetInput.value = convertLengthValue(ridgeOffsetInput.value, fromUnit, toUnitName);
+      }
+    }
+
+    function updateOffsetUnit(){
+      const unit = document.getElementById('unit').value;
+      const label = document.getElementById('ridgeOffsetUnit');
+      if(label) label.textContent = unit;
+    }
+
+      function updateDimensionMode(){
+        const mode = document.getElementById('dimensionMode').value;
+        const label = document.getElementById('dimensionLabel');
+        if(mode === 'height'){
+          label.textContent = 'Wysokość dachu';
+        } else {
+          label.textContent = 'Podstawa dachu';
+        }
+      }
+
+    function calculateConcreteVolume(){
+      let volume = 0;
+      document.querySelectorAll('.beam-item').forEach(item => {
+        const length = parseFloat(item.querySelector('.beam-length').value) || 0;
+        const width = parseFloat(item.querySelector('.beam-width').value) || 0;
+        const height = parseFloat(item.querySelector('.beam-height').value) || 0;
+        // konwersja z cm na m: cm / 100
+        volume += (length / 100) * (width / 100) * (height / 100);
+      });
+      return volume;
+    }
+
+    function getConcreteDetailsData(){
+      return { details: approvedBeams, enteredCount: approvedBeams.length };
+    }
+
+    function updateConcreteDetailsDisplay(){
+      const data = getConcreteDetailsData();
+      const enteredEl = document.getElementById('concreteBeamsEntered');
+      const listEl = document.getElementById('concreteDetailsList');
+      const emptyEl = document.getElementById('concreteDetailsEmpty');
+
+      if(enteredEl) enteredEl.textContent = String(data.enteredCount);
+
+      if(!listEl || !emptyEl) return;
+
+      listEl.innerHTML = data.details.map((item, displayIndex) => {
+        const dims = `${item.length || 0} × ${item.width || 0} × ${item.height || 0} cm`;
+        return `<li><span class="beam-number">${displayIndex + 1}</span>. ${dims} = <span class="beam-volume">${item.beamVolume.toFixed(3)} m³</span></li>`;
+      }).join('');
+
+      emptyEl.style.display = data.details.length ? 'none' : 'block';
+    }
+
+    function setConcreteDetailsExpanded(expanded){
+      concreteDetailsExpanded = expanded;
+      const detailsEl = document.getElementById('concreteDetails');
+      const arrowEl = document.getElementById('concreteDetailsArrow');
+      const btnEl = document.getElementById('toggleConcreteDetailsBtn');
+      if(detailsEl) detailsEl.classList.toggle('hidden', !expanded);
+      if(arrowEl) arrowEl.textContent = expanded ? '▲' : '▼';
+      if(btnEl) btnEl.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+    }
+
+    function setResultsExpanded(expanded){
+      resultsExpanded = expanded;
+      const resultsEl = document.getElementById('results');
+      const arrowEl = document.getElementById('resultsArrow');
+      const btnEl = document.getElementById('toggleResultsBtn');
+      if(resultsEl) resultsEl.classList.toggle('hidden', !expanded);
+      if(arrowEl) arrowEl.textContent = expanded ? '▲' : '▼';
+      if(btnEl) btnEl.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+    }
+
+    function setupConcreteDetailsToggle(){
+      const btn = document.getElementById('toggleConcreteDetailsBtn');
+      if(!btn) return;
+      btn.addEventListener('click', () => {
+        setConcreteDetailsExpanded(!concreteDetailsExpanded);
+      });
+      setConcreteDetailsExpanded(false);
+    }
+
+    function setupResultsToggle(){
+      const btn = document.getElementById('toggleResultsBtn');
+      if(!btn) return;
+      btn.addEventListener('click', () => {
+        setResultsExpanded(!resultsExpanded);
+      });
+      setResultsExpanded(true);
+    }
+
+    function updateGraphic(data){
+      // update SVG graphic if needed - placeholder for future graphics
+    }
+
+    function displayAngle(angle, toolMode){
+      if(toolMode === 'square90') return Math.abs(90 - angle);
+      return angle;
+    }
+
+    function updateConcreteDisplay(){
+      const value = accumulatedConcrete > 0 ? accumulatedConcrete.toFixed(3) : '0';
+      const el = document.getElementById('concreteVolumeDisplay');
+      if(el) el.textContent = value;
+      updateConcreteDetailsDisplay();
+    }
+
+    function saveConcrete(){
+      const beamsToApprove = [];
+      document.querySelectorAll('.beam-item').forEach(item => {
+        const length = parseFloat(item.querySelector('.beam-length').value) || 0;
+        const width = parseFloat(item.querySelector('.beam-width').value) || 0;
+        const height = parseFloat(item.querySelector('.beam-height').value) || 0;
+        if(length > 0 && width > 0 && height > 0){
+          beamsToApprove.push({
+            length,
+            width,
+            height,
+            beamVolume: (length / 100) * (width / 100) * (height / 100)
+          });
+        }
+      });
+
+      if(!beamsToApprove.length){
+        alert('Podaj wymiary betonu aby zatwierdzić');
+        return;
+      }
+
+      approvedBeams = approvedBeams.concat(beamsToApprove);
+      accumulatedConcrete += beamsToApprove.reduce((sum, beam) => sum + beam.beamVolume, 0);
+      updateConcreteDisplay();
+      calc();
+    }
+
+    function calc(showAlert = false){
+      const inputRaw = parseFloat(document.getElementById('baseB').value) || 0;
+      const pitchDeg = parseFloat(document.getElementById('pitchDeg').value) || 0;
+      const unit = document.getElementById('unit').value;
+      const mode = document.getElementById('dimensionMode').value;
+      const toolMode = document.getElementById('angleToolMode').value;
+      const ridgeOffsetInputText = document.getElementById('ridgeOffset').value.trim();
+      const ridgeOffsetRaw = parseFloat(document.getElementById('ridgeOffset').value) || 0;
+      const inputValue = parseLength(inputRaw, unit);
+      const ridgeOffset = parseLength(ridgeOffsetRaw, unit);
+      const ridgeOffsetDisplay = ridgeOffsetInputText === '' ? `0 ${unit}` : `${toUnit(ridgeOffset,unit)} ${unit}`;
+      const hasRidgeOffset = ridgeOffsetInputText !== '';
+
+      if(inputValue<=0 || pitchDeg<=0){ if(showAlert) alert('Podaj wartość i kąt'); return; }
+
+      const pitchRad = pitchDeg * Math.PI/180;
+      const alpha = pitchDeg;
+
+      // obliczenia główne
+      const b = mode === 'height' ? inputValue / Math.tan(pitchRad) : inputValue; // podstawa od zaciosu głównej murlaty
+      const a = mode === 'height' ? inputValue : b * Math.tan(pitchRad); // wzniesienie
+      const c = b / Math.cos(pitchRad); // krokiew
+      const nowaOdlegloscPozioma = Math.sqrt((b * b) + (ridgeOffset * ridgeOffset));
+      const katOdchyluKrokwi = Math.atan((Math.tan(pitchRad) * b) / nowaOdlegloscPozioma) * 180/Math.PI;
+      const dlugoscKrokwiOdchylonej = Math.sqrt((a * a) + (nowaOdlegloscPozioma * nowaOdlegloscPozioma));
+      // Trasowanie dla krokwi z wysunięciem: liczenie z Pitagorasa
+      // przyprostokątna = c (długość krokwi)
+      // wysokość = ridgeOffset (wysunięcie kalenicy)
+      // trasowanie = atan(ridgeOffset / c)
+      const katTrasowaniaKrokwiOdchylonej = hasRidgeOffset
+        ? Math.atan(ridgeOffset / c) * 180/Math.PI
+        : 0;
+      // narożna
+      const cos45 = Math.cos(45*Math.PI/180);
+      const x_corner = cos45 * Math.tan(pitchRad);
+      const alphaN = Math.atan(x_corner) * 180/Math.PI;
+      const bn = b * Math.SQRT2;
+      const cn = bn / Math.cos(alphaN * Math.PI/180);
+
+      // kąty trasowania i fazowania narożnej
+      const katTrasowaniaNaroznej = Math.atan(Math.cos(alphaN * Math.PI/180)) * 180/Math.PI;
+      const katFazowaniaNaroznej = Math.atan(Math.sin(alphaN * Math.PI/180)) * 180/Math.PI;
+
+      // kąty trasowania i fazowania dla połaci (wyliczamy wcześniej, używane w podsumowaniu)
+      const katTrasowania = Math.atan(Math.cos(pitchRad)) * 180/Math.PI;
+      const x_faz = Math.sin(pitchRad) / Math.SQRT2;
+      const katFazowania = Math.asin(Math.max(-1,Math.min(1,x_faz))) * 180/Math.PI;
+      const kalenicaNaStyk = 90 - alpha;
+      const kalenicaNaZaklad = 180 - 2 * alpha;
+
+      const alphaDisplay = displayAngle(alpha, toolMode);
+      const alphaNDisplay = alphaN;
+      const katTrasowaniaDisplay = displayAngle(katTrasowania, toolMode);
+      const katTrasowaniaNaroznejDisplay = displayAngle(katTrasowaniaNaroznej, toolMode);
+      const katFazowaniaDisplay = displayAngle(katFazowania, toolMode);
+      const katFazowaniaNaroznejDisplay = displayAngle(katFazowaniaNaroznej, toolMode);
+      const kalenicaNaStykDisplay = displayAngle(kalenicaNaStyk, toolMode);
+      const kalenicaNaZakladDisplay = displayAngle(kalenicaNaZaklad, toolMode);
+      const katOdchyluKrokwiDisplay = katOdchyluKrokwi;
+      const katTrasowaniaKrokwiOdchylonejDisplay = displayAngle(katTrasowaniaKrokwiOdchylonej, toolMode);
+      const katKrokwiDisplayText = hasRidgeOffset
+        ? `${katOdchyluKrokwiDisplay.toFixed(2)}°, ${toUnit(dlugoscKrokwiOdchylonej,unit)} ${unit}, ${katTrasowaniaKrokwiOdchylonejDisplay.toFixed(2)}°`
+        : `0°, 0 ${unit}, 0°`;
+
+      updateGraphic({ unit, a, b, c, alpha: alphaDisplay, alphaN: alphaNDisplay, bn, cn, katTrasowaniaNaroznej: katTrasowaniaNaroznejDisplay });
+      updateConcreteDisplay();
+
+      // wypełnij dwukolumnowy podgląd wyników (Połać | Naroże)
+      const summary = document.getElementById('summary');
+      let leftCol = '';
+      let rightCol = '';
+
+      leftCol += `<div class="summary-card"><div class="summary-title">Krokiew główna</div>`;
+      // main small boxes: Podstawa dachu, Długość, Wysokość dachu
+      leftCol += `<div class="main-grid-two">`;
+      leftCol += `<div class="main-box"><div class="main-value">${toUnit(b,unit)} ${unit}</div><div class="main-label">Podstawa dachu</div></div>`;
+      leftCol += `<div class="main-box"><div class="main-value">${toUnit(c,unit)} ${unit}</div><div class="main-label">Długość krokwi</div></div>`;
+      leftCol += `<div class="main-box"><div class="main-value">${toUnit(a,unit)} ${unit}</div><div class="main-label">Wysokość dachu</div></div>`;
+      leftCol += `<div class="main-box"><div class="main-value">${katTrasowaniaDisplay.toFixed(2)}°</div><div class="main-label">Trasowanie</div></div>`;
+      leftCol += `<div class="main-box"><div class="main-value">${kalenicaNaStykDisplay.toFixed(2)}°</div><div class="main-label">Kalenica na styk</div></div>`;
+      leftCol += `<div class="main-box"><div class="main-value">${kalenicaNaZakladDisplay.toFixed(2)}°</div><div class="main-label">Kalenica na zakład</div></div>`;
+      leftCol += `<div class="main-box"><div class="main-value">${katKrokwiDisplayText}</div><div class="main-label">Kąt krokwi, długość, trasowanie</div></div>`;
+      leftCol += `</div>`;
+      leftCol += `</div>`;
+
+      // prawa kolumna: Naroże - 2x2 pola (Lewa | Zwykła | Prawa | Narożna)
+      rightCol += `<div class="summary-card"><div class="summary-title">Krokiew narożna</div>`;
+      rightCol += `<div class="corner-grid-two">`;
+      rightCol += `<div class="corner-box"><div class="corner-value">${toUnit(bn,unit)} ${unit}</div><div class="corner-label">Podstawa dachu</div></div>`;
+      rightCol += `<div class="corner-box"><div class="corner-value">${toUnit(cn,unit)} ${unit}</div><div class="corner-label">Długość narożnej</div></div>`;
+      let cornerAngleHtml = `<div class="corner-box"><div class="corner-value">${alphaNDisplay.toFixed(2)}°</div><div class="corner-label">Kąt krokwi narożnej</div></div>`;
+      rightCol += cornerAngleHtml;
+      rightCol += `<div class="corner-box"><div class="corner-value">${katTrasowaniaNaroznejDisplay.toFixed(2)}°</div><div class="corner-label">Trasowanie</div></div>`;
+      rightCol += `<div class="corner-box"><div class="corner-value">${katFazowaniaNaroznejDisplay.toFixed(2)}°</div><div class="corner-label">Kąt fazowania</div></div>`;
+      rightCol += `</div></div>`;
+      summary.innerHTML = `<div class="summary-grid">${leftCol}${rightCol}</div>`;
+
+      lastResultsText = [
+        `Typ kątownika: ${toolMode === 'square90' ? 'Aluminiowy 90°' : 'Nastawny'}`,
+        `Kąt dachu: ${alphaDisplay.toFixed(2)}°`,
+        `Podstawa dachu: ${toUnit(b,unit)} ${unit}`,
+        `Wysokość dachu: ${toUnit(a,unit)} ${unit}`,
+        `Krokiew: ${toUnit(c,unit)} ${unit}`,
+        `Wysunięcie kalenicy: ${ridgeOffsetDisplay}`,
+        `Kąt krokwi: ${hasRidgeOffset ? katOdchyluKrokwiDisplay.toFixed(2) : '0.00'}°, długość: ${hasRidgeOffset ? toUnit(dlugoscKrokwiOdchylonej,unit) : '0'} ${unit}, trasowanie: ${hasRidgeOffset ? katTrasowaniaKrokwiOdchylonejDisplay.toFixed(2) : '0.00'}°`,
+        `Kąt krokwi narożnej: ${alphaNDisplay.toFixed(2)}°`,
+        `Krokiew narożna: ${toUnit(cn,unit)} ${unit}`,
+        `Trasowanie narożnej: ${katTrasowaniaNaroznejDisplay.toFixed(2)}°`,
+        `Kalenica na styk: ${kalenicaNaStykDisplay.toFixed(2)}°`,
+        `Kalenica na zakład: ${kalenicaNaZakladDisplay.toFixed(2)}°`,
+      ].join('\n');
+    }
+
+    async function copyResults(){
+      const status = document.getElementById('copyStatus');
+      if(!lastResultsText){
+        status.textContent = 'Najpierw kliknij Oblicz.';
+        return;
+      }
+      try{
+        await navigator.clipboard.writeText(lastResultsText);
+        status.textContent = 'Wyniki skopiowane do schowka.';
+      } catch(_){
+        status.textContent = 'Nie udało się skopiować (uprawnienia przeglądarki).';
+      }
+    }
+
+    function autoCalcIfEnabled(){
+      const auto = document.getElementById('autoCalc');
+      if(auto && auto.checked){
+        calc(false);
+      }
+    }
+
+      document.getElementById('dimensionMode').addEventListener('change', () => {
+        updateDimensionMode();
+        calc();
+      });
+    document.getElementById('angleToolMode').addEventListener('change', () => calc(false));
+    document.getElementById('unit').addEventListener('change', () => {
+      const currentUnit = document.getElementById('unit').value;
+      convertLengthInputsToUnit(previousLengthUnit, currentUnit);
+      previousLengthUnit = currentUnit;
+      updateOffsetUnit();
+      calc(false);
+    });
+    document.getElementById('saveConcreteBtn').addEventListener('click', saveConcrete);
+    document.getElementById('calcBtn').addEventListener('click', () => calc(true));
+    document.getElementById('beamsContainer').addEventListener('input', (event) => {
+      if(event.target && event.target.matches('.beam-length, .beam-width, .beam-height')){
+        // lista i suma zmieniają się po kliknięciu "Zatwierdź beton"
+      }
+    });
+    document.getElementById('beamsContainer').addEventListener('click', (event) => {
+      if(event.target && event.target.classList.contains('beam-remove')){
+        const beamItem = event.target.closest('.beam-item');
+        if(beamItem){
+          beamItem.remove();
+          refreshBeamHeaders();
+        }
+      }
+    });
+    
+    // inicjalizuj belki na start
+    initializeBeams();
+    setupConcreteDetailsToggle();
+    setupResultsToggle();
+    
+    // inicjalizacja
+    seedDefaultFormulas();
+    updateConcreteDisplay();
+    updateConcreteDetailsDisplay();
+    updateOffsetUnit();
+    previousLengthUnit = document.getElementById('unit').value;
+    updateDimensionMode();
+    calc();
+    // przycisk czyszczenia wartości belek
+    document.getElementById('clearBeamsBtn').addEventListener('click', () => {
+      initializeBeams();
+      approvedBeams = [];
+      accumulatedConcrete = 0; // resetuj sumę betonu
+      updateConcreteDisplay();
+      calc();
+    });
+
+    function getBeamHtml(beamNumber) {
+      return `
+        <div class="beam-item">
+          <div class="beam-header">Belka ${beamNumber}<button class="beam-remove" type="button">Usuń</button></div>
+          <div class="beam-inputs">
+            <div class="beam-input-group">
+              <label>Długość (cm)</label>
+              <input type="number" class="beam-length" step="1" value="" placeholder="">
+            </div>
+            <div class="beam-input-group">
+              <label>Szerokość (cm)</label>
+              <input type="number" class="beam-width" step="1" value="" placeholder="">
+            </div>
+            <div class="beam-input-group">
+              <label>Wysokość (cm)</label>
+              <input type="number" class="beam-height" step="1" value="" placeholder="">
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function refreshBeamHeaders() {
+      const allBeams = document.querySelectorAll('.beam-item');
+      allBeams.forEach((item, idx) => {
+        const header = item.querySelector('.beam-header');
+        if(header){
+          header.firstChild.textContent = `Belka ${idx + 1}`;
+        }
+        const removeBtn = item.querySelector('.beam-remove');
+        if(removeBtn){
+          removeBtn.style.display = allBeams.length > 1 ? 'inline-block' : 'none';
+        }
+      });
+    }
+
+    // dynamiczne dodawanie belek - inicjalizacja pierwszego pola
+    function initializeBeams() {
+      const container = document.getElementById('beamsContainer');
+      container.innerHTML = ''; // wyczyść
+      container.insertAdjacentHTML('beforeend', getBeamHtml(1));
+      refreshBeamHeaders();
+
+      // wyczyść pola typu number - usunięcie domyślnego 0
+      document.querySelectorAll('.beam-length, .beam-width, .beam-height').forEach(input => {
+        input.value = '';
+        input.addEventListener('focus', function() {
+          if(this.value === '0') this.value = '';
+        });
+      });
+    }
+    
+    // inicjalizuj belki na start
+  </script>
+</body>
+</html>
